@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — Velclaw Identity</title>
+    <meta name="color-scheme" content="dark">
+    <meta name="robots" content="noindex">
+    <link rel="icon" type="image/svg+xml" href="/public/ocodejs-logo.svg">
+    <link rel="stylesheet" href="/public/theme.css">
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="brand">
+        <a href="/" class="brand-home" aria-label="Về trang chủ">
+          <img
+            class="brand-logo"
+            src="/public/ocodejs-logo.svg"
+            alt="OCode.js"
+            width="165"
+            height="61"
+          >
+        </a>
+        <span class="brand-rule" aria-hidden="true"></span>
+        <span class="brand-sub">Dashboard</span>
+      </header>
+
+      <p class="eyebrow">Velclaw · Admin</p>
+      <h1>Dashboard</h1>
+      <p class="lede">
+        Audit log, API key và hạn mức. Trang này yêu cầu đăng nhập bằng một handle
+        nằm trong <code>VELCLAW_ADMIN_HANDLES</code>.
+      </p>
+
+      <div id="gate" class="alert" role="alert" hidden></div>
+
+      <div id="app" hidden>
+        <!-- stats ---------------------------------------------------- -->
+        <section class="card" aria-labelledby="stats-title">
+          <div class="card-head">
+            <h2 class="card-title" id="stats-title">Tổng quan</h2>
+            <button class="btn btn-ghost" id="refresh" type="button">
+              Làm mới
+            </button>
+          </div>
+          <div class="stat-row" id="stats">…</div>
+        </section>
+
+        <!-- keys ----------------------------------------------------- -->
+        <section class="card" aria-labelledby="keys-title">
+          <div class="card-head">
+            <h2 class="card-title" id="keys-title">API keys</h2>
+            <span class="pill" id="keys-count">0</span>
+          </div>
+
+          <form class="key-form" id="key-form">
+            <input
+              type="text"
+              id="key-name"
+              placeholder="Tên key (vd: ci-pipeline)"
+              maxlength="80"
+              autocomplete="off"
+            >
+            <button class="btn btn-primary" type="submit">Tạo key</button>
+          </form>
+
+          <div id="new-key" hidden></div>
+          <div id="key-list" class="rows">…</div>
+        </section>
+
+        <!-- audit ---------------------------------------------------- -->
+        <section class="card" aria-labelledby="audit-title">
+          <div class="card-head">
+            <h2 class="card-title" id="audit-title">Audit log</h2>
+            <select id="audit-filter" class="select">
+              <option value="">Tất cả sự kiện</option>
+              <option value="login.success">login.success</option>
+              <option value="login.failure">login.failure</option>
+              <option value="logout">logout</option>
+              <option value="verify.success">verify.success</option>
+              <option value="verify.failure">verify.failure</option>
+              <option value="apikey.created">apikey.created</option>
+              <option value="apikey.revoked">apikey.revoked</option>
+              <option value="ratelimit.blocked">ratelimit.blocked</option>
+            </select>
+          </div>
+          <div id="audit-list" class="audit-list">…</div>
+        </section>
+      </div>
+
+      <footer>
+        <span>OCode.js · Velclaw</span>
+        <span>
+          <a href="/">Trang chủ</a>
+          ·
+          <a href="/docs">Tài liệu</a>
+          ·
+          <a href="/source">Source</a>
+        </span>
+      </footer>
+    </div>
+
+    <script src="https://esm.town/v/std/catch"></script>
+    <script src="/public/dashboard.js" type="module"></script>
+  </body>
+</html>
