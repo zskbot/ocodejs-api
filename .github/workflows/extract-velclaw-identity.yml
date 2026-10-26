@@ -1,0 +1,106 @@
+name: Extract Velclaw Identity ZIP
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/extract-velclaw-identity.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: extract-velclaw-identity
+  cancel-in-progress: false
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Validate and extract ZIP
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path, PurePosixPath
+          from zipfile import ZipFile
+          import shutil
+
+          archive = Path("velclaw-identity.zip")
+          destination = Path("velclaw-identity")
+
+          if not archive.is_file():
+              raise SystemExit("ERROR: velclaw-identity.zip was not found at repository root.")
+          if destination.exists():
+              raise SystemExit("ERROR: velclaw-identity/ already exists; refusing to overwrite files.")
+
+          with ZipFile(archive) as zf:
+              members = zf.infolist()
+              if not members:
+                  raise SystemExit("ERROR: ZIP archive is empty.")
+              total = sum(m.file_size for m in members)
+              if total > 50 * 1024 * 1024:
+                  raise SystemExit("ERROR: expanded ZIP exceeds 50 MiB safety limit.")
+
+              safe_members = []
+              for info in members:
+                  name = info.filename
+                  path = PurePosixPath(name)
+                  if path.is_absolute() or ".." in path.parts or not path.parts:
+                      raise SystemExit(f"ERROR: unsafe ZIP path: {name!r}")
+                  if path.parts[0] in (".git", "__MACOSX"):
+                      continue
+                  if any(part == ".git" for part in path.parts):
+                      raise SystemExit(f"ERROR: ZIP contains a .git path: {name!r}")
+                  if info.is_dir():
+                      continue
+                  safe_members.append((info, path))
+
+              if not safe_members:
+                  raise SystemExit("ERROR: ZIP has no extractable files.")
+
+              destination.mkdir()
+              for info, rel in safe_members:
+                  target = destination.joinpath(*rel.parts)
+                  target.parent.mkdir(parents=True, exist_ok=True)
+                  with zf.open(info, "r") as src, target.open("wb") as dst:
+                      shutil.copyfileobj(src, dst)
+
+          files = [p for p in destination.rglob("*") if p.is_file()]
+          if not files:
+              raise SystemExit("ERROR: extraction produced no files.")
+          print(f"Extracted {len(files)} files into {destination}/")
+          for path in sorted(files):
+              print(f"{path} ({path.stat().st_size} bytes)")
+          PY
+
+      - name: Create review branch and pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch="chore/extract-velclaw-identity"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add velclaw-identity/
+          git diff --cached --quiet && { echo "No extracted changes to commit."; exit 0; }
+          git commit -m "Extract Velclaw Identity source archive"
+          git push --set-upstream origin "$branch"
+          if gh pr view "$branch" --json url >/dev/null 2>&1; then
+            echo "Pull request already exists for $branch."
+          else
+            gh pr create \
+              --base main \
+              --head "$branch" \
+              --title "Extract Velclaw Identity source archive" \
+              --body "Safely extracts `velclaw-identity.zip` into `velclaw-identity/`. The original ZIP is preserved. Review the extracted source before merging."
+          fi
