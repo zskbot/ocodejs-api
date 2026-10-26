@@ -1,0 +1,11 @@
+.env
+.env.*
+!.env.example
+.deno/
+deno.lock
+node_modules/
+dist/
+build/
+.DS_Store
+.idea/
+*.swp

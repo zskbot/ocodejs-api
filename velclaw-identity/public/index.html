@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Velclaw Identity — OCode.js</title>
+    <meta name="color-scheme" content="dark">
+    <meta
+      name="description"
+      content="Lớp xác thực cho Velclaw: verify JWT qua Neon Auth JWKS, session máy chủ, OAuth callback."
+    >
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="/public/ocodejs-logo.svg"
+    >
+    <link rel="stylesheet" href="/public/theme.css">
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="brand">
+        <img
+          class="brand-logo"
+          src="/public/ocodejs-logo.svg"
+          alt="OCode.js"
+          width="165"
+          height="61"
+        >
+        <span class="brand-rule" aria-hidden="true"></span>
+        <span class="brand-sub">Identity</span>
+      </header>
+
+      <p class="eyebrow">Velclaw · Authentication Layer</p>
+      <h1>Velclaw Identity</h1>
+      <p class="lede">
+        Xác thực tập trung cho hệ sinh thái Velclaw. Verify JWT do Neon Auth phát
+        hành, giữ session phía máy chủ, và cung cấp endpoint kiểm tra token cho
+        các service khác.
+      </p>
+
+      <!-- session ------------------------------------------------------- -->
+      <section class="card" aria-labelledby="session-title">
+        <div class="card-head">
+          <h2 class="card-title" id="session-title">Phiên hiện tại</h2>
+          <span class="pill" id="session-pill" hidden>
+            <span class="pill-dot" aria-hidden="true"></span>
+            <span id="session-pill-text"></span>
+          </span>
+        </div>
+        <div id="session" class="session" aria-live="polite">
+          <span class="mono">Đang kiểm tra…</span>
+        </div>
+      </section>
+
+      <!-- status -------------------------------------------------------- -->
+      <section class="card" aria-labelledby="status-title">
+        <div class="card-head">
+          <h2 class="card-title" id="status-title">Trạng thái hệ thống</h2>
+          <span class="pill" id="health-pill" hidden>
+            <span class="pill-dot" aria-hidden="true"></span>
+            <span id="health-pill-text"></span>
+          </span>
+        </div>
+        <p class="mono" style="margin: 0 0 12px">
+          Provider: <span id="provider">…</span>
+        </p>
+        <pre class="raw" id="health">…</pre>
+      </section>
+
+      <!-- endpoints ----------------------------------------------------- -->
+      <section class="card" aria-labelledby="endpoints-title">
+        <div class="card-head">
+          <h2 class="card-title" id="endpoints-title">Endpoints</h2>
+        </div>
+        <div class="rows">
+          <div class="row">
+            <span class="method method-get">GET</span>
+            <span class="path">/auth/login</span>
+            <span class="row-note">Bắt đầu đăng nhập</span>
+          </div>
+          <div class="row">
+            <span class="method method-get">GET</span>
+            <span class="path">/auth/callback</span>
+            <span class="row-note">Nhận code, tạo session</span>
+          </div>
+          <div class="row">
+            <span class="method method-post">POST</span>
+            <span class="path">/auth/logout</span>
+            <span class="row-note">Thu hồi session</span>
+          </div>
+          <div class="row">
+            <span class="method method-get">GET</span>
+            <span class="path">/api/me</span>
+            <span class="row-note">Identity hiện tại</span>
+          </div>
+          <div class="row">
+            <span class="method method-post">POST</span>
+            <span class="path">/api/verify</span>
+            <span class="row-note">Verify JWT</span>
+          </div>
+          <div class="row">
+            <span class="method method-post">POST</span>
+            <span class="path">/api/token</span>
+            <span class="row-note">Cấp access token</span>
+          </div>
+          <div class="row">
+            <span class="method method-get">GET</span>
+            <span class="path">/.well-known/jwks.json</span>
+            <span class="row-note">Mirror JWKS</span>
+          </div>
+          <div class="row">
+            <span class="method method-get">GET</span>
+            <span class="path">/api/health</span>
+            <span class="row-note">Kiểm tra dịch vụ</span>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        <span>OCode.js · Velclaw</span>
+        <span>
+          <a href="https://zskbot.github.io/docs-ocodejs/" target="_blank"
+            rel="noopener noreferrer">Tài liệu</a>
+          ·
+          <a href="/source">Source</a>
+        </span>
+      </footer>
+    </div>
+
+    <script src="https://esm.town/v/std/catch"></script>
+    <script src="/public/app.js" type="module"></script>
+  </body>
+</html>

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tài liệu API — Velclaw Identity</title>
+    <meta name="color-scheme" content="dark">
+    <meta
+      name="description"
+      content="Tài liệu API và danh mục skills cho Velclaw Identity."
+    >
+    <link rel="icon" type="image/svg+xml" href="/public/ocodejs-logo.svg">
+    <link rel="stylesheet" href="/public/theme.css">
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="brand">
+        <a href="/" class="brand-home" aria-label="Về trang chủ">
+          <img
+            class="brand-logo"
+            src="/public/ocodejs-logo.svg"
+            alt="OCode.js"
+            width="165"
+            height="61"
+          >
+        </a>
+        <span class="brand-rule" aria-hidden="true"></span>
+        <span class="brand-sub">Docs</span>
+      </header>
+
+      <p class="eyebrow">Velclaw · API Reference</p>
+      <h1>Tài liệu API</h1>
+      <p class="lede">
+        Tham chiếu đầy đủ cho lớp identity của Velclaw. Mọi endpoint đều có bản
+        máy đọc được trong
+        <a href="/api/openapi.json">OpenAPI 3.1</a>.
+      </p>
+
+      <!-- quick nav ----------------------------------------------------- -->
+      <nav class="toc" aria-label="Mục lục">
+        <a href="#auth">Xác thực</a>
+        <a href="#identity">Danh tính</a>
+        <a href="#tokens">Token</a>
+        <a href="#meta">Meta</a>
+        <a href="#skills">Skills</a>
+      </nav>
+
+      <!-- auth ---------------------------------------------------------- -->
+      <section class="card" id="auth" aria-labelledby="auth-title">
+        <div class="card-head">
+          <h2 class="card-title" id="auth-title">Xác thực</h2>
+          <span class="pill">2 endpoints</span>
+        </div>
+
+        <article class="endpoint">
+          <h3 class="endpoint-head">
+            <span class="method method-get">GET</span>
+            <code class="path">/auth/login</code>
+          </h3>
+          <p class="endpoint-desc">
+            Bắt đầu đăng nhập. Chuyển hướng tới provider đang cấu hình và đặt
+            cookie <code>state</code> + PKCE (TTL 10 phút).
+          </p>
+          <p class="endpoint-note">
+            Velclaw OAuth nếu có <code>VELCLAW_OAUTH_CLIENT_ID</code>, ngược lại
+            dùng Val Town (không cần cấu hình).
+          </p>
+        </article>
+
+        <article class="endpoint">
+          <h3 class="endpoint-head">
+            <span class="method method-get">GET</span>
+            <code class="path">/auth/callback</code>
+          </h3>
+          <p class="endpoint-desc">
+            Provider gọi lại. Đối chiếu <code>state</code>, đổi code lấy token,
+            verify <code>id_token</code> với JWKS, tạo session và đặt cookie
+            <code>velclaw_session</code>.
+          </p>
+          <div class="params">
+            <div class="param"><code>code</code><span>Bắt buộc</span></div>
+            <div class="param"><code>state</code><span>Bắt buộc</span></div>
+            <div class="param"><code>error</code><span>Tuỳ chọn — provider trả lỗi</span></div>
+          </div>
+        </article>
+      </section>
+
+      <!-- identity ------------------------------------------------------ -->
+      <section class="card" id="identity" aria-labelledby="identity-title">
+        <div class="card-head">
+          <h2 class="card-title" id="identity-title">Danh tính</h2>
+          <span class="pill">2 endpoints</span>
+        </div>
+
+        <article class="endpoint">
+          <h3 class="endpoint-head">
+            <span class="method method-get">GET</span>
+            <code class="path">/api/me</code>
+          </h3>
+          <p class="endpoint-desc">
+            Identity của session đang hoạt động. Trả <code>401</code> nếu chưa
+            đăng nhập.
+          </p>
+          <pre class="code"><span class="c-comment"># Response 200</span>
+{
+  "user": {
+    "id": "vt:12345",
+    "email": "you@example.com",
+    "name": "your-handle",
+    "issuer": "valtown"
+  }
+}</pre>
+        </article>
+
+        <article class="endpoint">
+          <h3 class="endpoint-head">
+            <span class="method method-post">POST</span>
+            <code class="path">/auth/logout</code>
+          </h3>
+          <p class="endpoint-desc">
+            Thu hồi session trong database (không chỉ xoá cookie) và xoá cookie.
+          </p>
+          <pre class="code"><span class="c-comment"># Response 200</span>
+{ "ok": true }</pre>
+        </article>
+      </section>
+
+      <!-- tokens -------------------------------------------------------- -->
+      <section class="card" id="tokens" aria-labelledby="tokens-title">
+        <div class="card-head">
+          <h2 class="card-title" id="tokens-title">Token</h2>
+          <span class="pill">3 endpoints</span>
+        </div>
+
+        <article class="endpoint">
+          <h3 class="endpoint-head">
+            <span class="method method-post">POST</span>
+            <code class="path">/api/verify</code>
+          </h3>
+          <p class="endpoint-desc">
+            Verify một JWT: chữ ký với JWKS, thuật toán trong allowlist,
+            <code>exp</code>/<code>iss</code>/<code>aud</code> hợp lệ. Nhận token
+            qua header <code>Authorization</code> hoặc body.
+          </p>
+          <pre class="code"><span class="c-comment"># Request</span>
+curl -X POST <span class="c-var">$BASE</span>/api/verify \
+  -H "content-type: application/json" \
+  -d '{"token":"eyJhbGciOi..."}'
+
+<span class="c-comment"># Response 200</span>
+{
+  "valid": true,
+  "identity": { "sub": "user_123", "email": "…", "expiresAt": 1793029971000 }
+}</pre>
+          <p class="endpoint-note">
+            Token không hợp lệ trả <code>401</code> kèm
+            <code>{"valid": false, "error": "…"}</code>.
+          </p>
+        </article>
+
+        <article class="endpoint">
+          <h3 class="endpoint-head">
+            <span class="method method-post">POST</span>
+            <code class="path">/api/token</code>
+          </h3>
+          <p class="endpoint-desc">
+            Cấp JWT HS256 ngắn hạn cho user đang đăng nhập.
+          </p>
+          <p class="endpoint-note">
+            Cần <code>VELCLAW_IDENTITY_SECRET</code>; trả <code>500</code> nếu
+            chưa cấu hình.
+          </p>
+        </article>
+
+        <article class="endpoint">
+          <h3 class="endpoint-head">
+            <span class="method method-get">GET</span>
+            <code class="path">/.well-known/jwks.json</code>
+          </h3>
+          <p class="endpoint-desc">
+            Bản sao JWKS của upstream (Neon Auth), cache 10 phút. Pin một URL
+            duy nhất thay vì gọi thẳng upstream.
+          </p>
+        </article>
+      </section>
+
+      <!-- meta ---------------------------------------------------------- -->
+      <section class="card" id="meta" aria-labelledby="meta-title">
+        <div class="card-head">
+          <h2 class="card-title" id="meta-title">Meta</h2>
+          <span class="pill">3 endpoints</span>
+        </div>
+
+        <article class="endpoint">
+          <h3 class="endpoint-head">
+            <span class="method method-get">GET</span>
+            <code class="path">/api/health</code>
+          </h3>
+          <p class="endpoint-desc">
+            Kiểm tra JWKS có truy cập được và provider đang hoạt động. Trả
+            <code>503</code> khi JWKS hỏng.
+          </p>
+        </article>
+
+        <article class="endpoint">
+          <h3 class="endpoint-head">
+            <span class="method method-get">GET</span>
+            <code class="path">/api/openapi.json</code>
+          </h3>
+          <p class="endpoint-desc">
+            Toàn bộ tài liệu này dạng OpenAPI 3.1. Import được vào Postman,
+            Insomnia, Swagger UI hoặc bất kỳ agent planner nào.
+          </p>
+        </article>
+
+        <article class="endpoint">
+          <h3 class="endpoint-head">
+            <span class="method method-get">GET</span>
+            <code class="path">/api/skills.json</code>
+          </h3>
+          <p class="endpoint-desc">
+            Danh mục skills dạng JSON. Lọc bằng <code>?category=</code> hoặc
+            <code>?q=</code>.
+          </p>
+        </article>
+      </section>
+
+      <!-- skills -------------------------------------------------------- -->
+      <section class="card" id="skills" aria-labelledby="skills-title">
+        <div class="card-head">
+          <h2 class="card-title" id="skills-title">Danh mục Skills</h2>
+          <a
+            class="pill"
+            href="/api/skills.json"
+            style="text-decoration: none"
+          >/api/skills.json</a>
+        </div>
+
+        <p class="endpoint-desc" style="margin-bottom: 16px">
+          Các gói hướng dẫn tái sử dụng cho AI agent, nhóm theo mục đích. Cài bằng
+          <code>npx skills add &lt;owner/repo&gt;</code>.
+        </p>
+
+        <div id="skills-list" class="skill-groups">
+          <span class="mono">Đang tải…</span>
+        </div>
+
+        <div class="notice" role="note">
+          <strong>Lưu ý an toàn.</strong> Đây là danh mục tham chiếu — val này
+          không host, mirror hay thực thi skill nào. Trước khi cài, hãy mở
+          repository nguồn, đọc <code>SKILL.md</code>, kiểm tra script và quyền
+          truy cập. Không đưa API key hay dữ liệu riêng tư vào prompt/tệp skill.
+        </div>
+
+        <p class="endpoint-note">
+          Nguồn chính:
+          <a
+            href="https://skills.sh/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >skills.sh</a>
+          · Tham chiếu:
+          <a
+            href="https://github.com/zskbot/docs-ocodejs/blob/main/docs/AGENT-SKILLS-DIRECTORY.md"
+            target="_blank"
+            rel="noopener noreferrer"
+          >AGENT-SKILLS-DIRECTORY.md</a>
+        </p>
+      </section>
+
+      <footer>
+        <span>OCode.js · Velclaw</span>
+        <span>
+          <a href="/">Trang chủ</a>
+          ·
+          <a href="/api/openapi.json">OpenAPI</a>
+          ·
+          <a href="/source">Source</a>
+        </span>
+      </footer>
+    </div>
+
+    <script src="https://esm.town/v/std/catch"></script>
+    <script src="/public/docs.js" type="module"></script>
+  </body>
+</html>

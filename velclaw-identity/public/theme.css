@@ -1,0 +1,837 @@
+/* Velclaw Identity — OCode.js design language.
+ *
+ * Per DESIGN_SYSTEM.md (zskbot/docs-ocodejs) rule 8, this is a *project-level*
+ * adaptation: it lives in this val, references the standard rather than
+ * modifying it, and keeps the required core traits from rule 5:
+ *
+ *   - dark / near-black background, light text
+ *   - restrained blue + violet accents
+ *   - minimal style, compact spacing rhythm, mobile responsive
+ *
+ * The tokens below are local to this page. The canonical source of truth
+ * remains https://zskbot.github.io/docs-ocodejs/ — do not treat this file as
+ * a second design system, and do not copy it back upstream.
+ */
+
+:root {
+  /* Surfaces — near-black, layered for depth without borders everywhere. */
+  --bg: #08090c;
+  --bg-elevated: #0e1015;
+  --bg-card: #12151b;
+  --bg-inset: #0a0c11;
+
+  /* Text */
+  --fg: #e8eaef;
+  --fg-muted: #9aa2b1;
+  --fg-subtle: #6b7383;
+
+  /* Accents — blue primary, violet secondary, used sparingly. */
+  --accent: #4d8dff;
+  --accent-hover: #6ba0ff;
+  --accent-soft: rgba(77, 141, 255, 0.12);
+  --violet: #9b7bff;
+  --violet-soft: rgba(155, 123, 255, 0.12);
+
+  /* Lines & states */
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --ok: #3ecf8e;
+  --danger: #ff6b6b;
+
+  /* Type */
+  --font-sans: "Geist", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Arial, sans-serif;
+  --font-mono: "Geist Mono", "SF Mono", ui-monospace, Menlo, monospace;
+
+  /* Rhythm — compact, per rule 5. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  --radius: 10px;
+  --radius-sm: 6px;
+  --max-width: 880px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* A single soft accent bloom behind the header — the only decoration. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -20% 0 auto 50%;
+  height: 480px;
+  transform: translateX(-50%);
+  background:
+    radial-gradient(
+      50% 60% at 35% 40%,
+      rgba(77, 141, 255, 0.14),
+      transparent 70%
+    ),
+    radial-gradient(
+      45% 55% at 70% 30%,
+      rgba(155, 123, 255, 0.10),
+      transparent 70%
+    );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.wrap {
+  position: relative;
+  z-index: 1;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: var(--space-7) var(--space-5) var(--space-6);
+}
+
+/* --- header ------------------------------------------------------------ */
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+/* The OCode.js wordmark is a white-on-transparent SVG, so it needs no filter
+   on a dark surface. Served from public/ so it is versioned with the val. */
+.brand-logo {
+  height: 30px;
+  width: auto;
+  display: block;
+}
+
+.brand-rule {
+  width: 1px;
+  height: 22px;
+  background: var(--border-strong);
+}
+
+.brand-sub {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+h1 {
+  font-size: clamp(24px, 5vw, 34px);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin: 0 0 var(--space-3);
+  font-weight: 700;
+}
+
+.lede {
+  color: var(--fg-muted);
+  margin: 0 0 var(--space-6);
+  max-width: 58ch;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-subtle);
+  margin: 0 0 var(--space-2);
+}
+
+/* --- cards ------------------------------------------------------------- */
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-5);
+  margin-bottom: var(--space-4);
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.card-title {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  margin: 0;
+}
+
+/* --- auth states ------------------------------------------------------- */
+
+.session {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.avatar {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--accent-soft);
+  border: 1px solid var(--border-strong);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--accent);
+}
+
+.identity {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.identity-name {
+  font-weight: 600;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fg-subtle);
+  margin: 2px 0 0;
+  overflow-wrap: anywhere;
+}
+
+/* --- buttons ----------------------------------------------------------- */
+
+.btn {
+  font: inherit;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--fg-muted);
+  border-color: var(--border-strong);
+}
+
+.btn-ghost:hover {
+  color: var(--fg);
+  border-color: var(--fg-subtle);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* --- status pills ------------------------------------------------------ */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--fg-muted);
+  white-space: nowrap;
+}
+
+.pill-ok {
+  color: var(--ok);
+  border-color: rgba(62, 207, 142, 0.3);
+  background: rgba(62, 207, 142, 0.08);
+}
+
+.pill-warn {
+  color: #f0b429;
+  border-color: rgba(240, 180, 41, 0.3);
+  background: rgba(240, 180, 41, 0.08);
+}
+
+.pill-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* --- error banner ------------------------------------------------------ */
+
+.alert {
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  background: rgba(255, 107, 107, 0.08);
+  color: var(--danger);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4);
+  font-size: 14px;
+  margin-bottom: var(--space-4);
+}
+
+/* --- endpoint table ---------------------------------------------------- */
+
+.rows {
+  display: grid;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: 10px var(--space-4);
+  background: var(--bg-inset);
+  font-size: 13px;
+}
+
+.method {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  width: 46px;
+  flex: 0 0 46px;
+  letter-spacing: 0.03em;
+}
+
+.method-get {
+  color: var(--accent);
+}
+
+.method-post {
+  color: var(--violet);
+}
+
+.path {
+  font-family: var(--font-mono);
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.row-note {
+  margin-left: auto;
+  color: var(--fg-subtle);
+  font-size: 12px;
+  text-align: right;
+}
+
+/* --- raw status dump --------------------------------------------------- */
+
+pre.raw {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.7;
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-4);
+  margin: 0;
+  overflow-x: auto;
+  color: var(--fg-muted);
+}
+
+/* --- footer ------------------------------------------------------------ */
+
+footer {
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--fg-subtle);
+}
+
+footer a {
+  color: var(--fg-muted);
+  text-decoration: none;
+  border-bottom: 1px solid var(--border-strong);
+}
+
+footer a:hover {
+  color: var(--fg);
+  border-color: var(--fg-muted);
+}
+
+/* --- responsive -------------------------------------------------------- */
+
+@media (max-width: 560px) {
+  .wrap {
+    padding: var(--space-5) var(--space-4) var(--space-5);
+  }
+
+  .card {
+    padding: var(--space-4);
+  }
+
+  .brand-logo {
+    height: 24px;
+  }
+
+  /* Stack the session block so a long username can't squeeze the button. */
+  .session {
+    gap: var(--space-3);
+  }
+
+  .session .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .row {
+    flex-wrap: wrap;
+  }
+
+  .row-note {
+    margin-left: 0;
+    width: 100%;
+    text-align: left;
+    padding-left: 58px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* --- docs page --------------------------------------------------------- */
+
+.brand-home {
+  display: inline-flex;
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+}
+
+/* Table of contents — sticky on desktop, scrolling row on mobile. */
+.toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+}
+
+.toc a {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--fg-muted);
+  text-decoration: none;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.toc a:hover {
+  color: var(--fg);
+  border-color: var(--border-strong);
+}
+
+/* Endpoint blocks */
+.endpoint {
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--border);
+}
+
+.endpoint:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.endpoint-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-2);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.endpoint-desc {
+  color: var(--fg-muted);
+  font-size: 14px;
+  margin: 0 0 var(--space-3);
+  max-width: 68ch;
+}
+
+.endpoint-note {
+  color: var(--fg-subtle);
+  font-size: 12.5px;
+  margin: var(--space-2) 0 0;
+}
+
+.endpoint-note a {
+  color: var(--fg-muted);
+}
+
+/* Inline code inside prose */
+.endpoint-desc code,
+.endpoint-note code,
+.skill-desc code,
+.notice code {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--accent);
+}
+
+/* Code blocks */
+pre.code {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.75;
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-4);
+  margin: 0 0 var(--space-3);
+  overflow-x: auto;
+  color: var(--fg-muted);
+  white-space: pre;
+}
+
+.c-comment {
+  color: var(--fg-subtle);
+}
+
+.c-var {
+  color: var(--violet);
+}
+
+/* Parameter list */
+.params {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.param {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  background: var(--bg-inset);
+}
+
+.param code {
+  font-family: var(--font-mono);
+  color: var(--accent);
+}
+
+.param span {
+  color: var(--fg-subtle);
+  font-size: 11.5px;
+}
+
+/* Callout */
+.notice {
+  border-left: 2px solid var(--violet);
+  background: var(--violet-soft);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: var(--space-3) var(--space-4);
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--fg-muted);
+  margin-top: var(--space-4);
+}
+
+.notice strong {
+  color: var(--fg);
+}
+
+/* Skill catalog */
+.skill-groups {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.skill-group {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-inset);
+  padding: var(--space-4);
+}
+
+.skill-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-1);
+}
+
+.skill-group-name {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.skill-group-desc {
+  margin: 0 0 var(--space-3);
+  font-size: 12.5px;
+  color: var(--fg-subtle);
+  max-width: 66ch;
+}
+
+.skill-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.skill {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+}
+
+.skill:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.skill-name {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.skill-desc {
+  font-size: 12.5px;
+  color: var(--fg-muted);
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+@media (max-width: 560px) {
+  .endpoint-head {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .skill {
+    gap: var(--space-1);
+  }
+
+  .skill-desc {
+    flex-basis: 100%;
+  }
+
+  pre.code {
+    font-size: 11.5px;
+  }
+}
+
+/* --- dashboard ---------------------------------------------------------- */
+
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-3);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-4);
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.stat-value {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-label {
+  font-size: 11.5px;
+  color: var(--fg-subtle);
+  line-height: 1.4;
+}
+
+.key-form {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.key-form input {
+  flex: 1 1 200px;
+  min-width: 0;
+  font: inherit;
+  font-size: 14px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-inset);
+  color: var(--fg);
+}
+
+.key-form input::placeholder {
+  color: var(--fg-subtle);
+}
+
+.key-form input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.btn-sm {
+  padding: 5px 12px;
+  font-size: 12.5px;
+}
+
+.select {
+  font: inherit;
+  font-size: 12.5px;
+  font-family: var(--font-mono);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-inset);
+  color: var(--fg-muted);
+}
+
+.key-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* Audit rows: pill + actor + detail + timestamp */
+.audit-list {
+  display: grid;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.audit-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: 9px var(--space-4);
+  background: var(--bg-inset);
+  font-size: 12.5px;
+  flex-wrap: wrap;
+}
+
+.audit-row .pill {
+  flex: 0 0 auto;
+  font-size: 10.5px;
+  padding: 2px 8px;
+}
+
+.audit-detail {
+  color: var(--fg-muted);
+  flex: 1 1 160px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.audit-time {
+  margin-left: auto;
+  color: var(--fg-subtle);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .key-form input,
+  .key-form .btn {
+    flex-basis: 100%;
+  }
+
+  .audit-time {
+    margin-left: 0;
+    flex-basis: 100%;
+  }
+
+  .stat-value {
+    font-size: 22px;
+  }
+}
