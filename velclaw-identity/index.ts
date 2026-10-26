@@ -523,7 +523,7 @@ app.post("/api/verify", async (c) => {
       detail: message,
       ip: clientIp(c.req.raw),
     });
-    return c.json({ valid: false, error: message }, 401);
+    return c.json({ valid: false, error: "Invalid or unverifiable token" }, 401);
   }
 });
 
@@ -684,7 +684,11 @@ app.delete("/api/admin/keys/:id", async (c) => {
 });
 
 // Unwrap and rethrow Hono errors as the original error so we get real stack traces.
-app.onError((err) => Promise.reject(err));
+// Keep internal exception details in server logs, not in public API responses.
+app.onError((err, c) => {
+  console.error("Unhandled request error:", err);
+  return c.json({ error: "Internal server error" }, 500);
+});
 
 // Housekeeping without blocking the response.
 pruneSessions().catch(() => {});
