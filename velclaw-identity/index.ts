@@ -345,7 +345,8 @@ app.get("/download.zip", async (c) => {
     console.warn(`archive: skipped ${skipped.join(", ")}`);
   }
 
-  return new Response(zip, {
+  const zipBuffer = zip.buffer.slice(zip.byteOffset, zip.byteOffset + zip.byteLength) as ArrayBuffer;
+  return new Response(zipBuffer, {
     headers: {
       "content-type": "application/zip",
       "content-disposition": 'attachment; filename="velclaw-identity.zip"',
