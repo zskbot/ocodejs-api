@@ -274,10 +274,10 @@ async function applyRateLimit(
 
 // --- routes: pages -------------------------------------------------------
 
-app.get("/", (c) => serveFile("/public/index.html"));
+app.get("/", () => serveFile("/public/index.html"));
 app.get("/public/*", (c) => serveFile(c.req.path));
-app.get("/docs", (c) => serveFile("/public/docs.html"));
-app.get("/dashboard", (c) => serveFile("/public/dashboard.html"));
+app.get("/docs", () => serveFile("/public/docs.html"));
+app.get("/dashboard", () => serveFile("/public/dashboard.html"));
 app.get("/source", (c) => c.redirect(parseVal().links.self.val));
 
 // --- routes: meta --------------------------------------------------------
@@ -338,7 +338,7 @@ app.get("/api/ecosystem.json", (c) => {
  * Built per request rather than cached: the archive must always match the
  * running version, and it's small enough that rebuilding is cheap.
  */
-app.get("/download.zip", async (c) => {
+app.get("/download.zip", async () => {
   const { zip, included, skipped } = await buildArchive();
 
   if (skipped.length > 0) {
