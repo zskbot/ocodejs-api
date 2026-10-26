@@ -1,0 +1,9 @@
+{
+  "tasks": {
+    "test": "deno run --allow-net --allow-env backend/jwt_test.ts",
+    "check": "deno check index.ts backend/*.ts"
+  },
+  "imports": {
+    "hono": "npm:hono"
+  }
+}
