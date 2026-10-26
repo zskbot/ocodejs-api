@@ -101,13 +101,18 @@ export async function valtownExchange(
     Array.fromAsync(client.orgs.list({})),
   ]);
 
-  const isOrgMember = me.username === orgHandle ||
+  const username = me.username;
+  if (typeof username !== "string" || username.trim() === "") {
+    throw new Error("Val Town profile is missing a username");
+  }
+
+  const isOrgMember = username === orgHandle ||
     userOrgs.some((o) => o.username === orgHandle);
 
   return {
     profile: {
       id: String(me.id),
-      username: me.username,
+      username,
       email: (me as { email?: string | null }).email ?? null,
     },
     isOrgMember,
