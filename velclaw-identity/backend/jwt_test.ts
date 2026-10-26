@@ -142,21 +142,12 @@ await withTestJwks(async () => {
   });
 
   await expectReject("rejects an expired token", async () => {
-    const header = b64url(JSON.stringify({ alg: "EdDSA", typ: "JWT", kid: edKid }));
-    const payload = b64url(
-      JSON.stringify({
-        sub: "user_123",
-        exp: Math.floor(Date.now() / 1000) - 60,
-      }),
-    );
-    const sig = await crypto.subtle.sign(
-      "Ed25519",
-      ed.privateKey,
-      new TextEncoder().encode(`${header}.${payload}`),
-    );
-    const b64sig = btoa(String.fromCharCode(...new Uint8Array(sig)))
-      .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-    await verifyJwt(`${header}.${payload}.${b64sig}`);
+    const token = await new SignJWT({ sub: "user_123" })
+      .setProtectedHeader({ alg: "EdDSA", typ: "JWT", kid: edKid })
+      .setIssuedAt()
+      .setExpirationTime(Math.floor(Date.now() / 1000) - 60)
+      .sign(ed.privateKey);
+    await verifyJwt(token);
   });
 
   await expectReject("rejects a token with no sub", async () => {

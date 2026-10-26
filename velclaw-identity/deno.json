@@ -1,7 +1,7 @@
 {
   "tasks": {
     "test": "deno run --allow-net --allow-env backend/jwt_test.ts",
-    "check": "deno check index.ts backend/*.ts"
+    "check": "deno check --allow-import=esm.town,esm.sh index.ts backend/*.ts"
   },
   "imports": {
     "hono": "npm:hono"
