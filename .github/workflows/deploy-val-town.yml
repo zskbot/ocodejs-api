@@ -100,7 +100,10 @@ jobs:
 
       - name: Deploy to the existing Val Town val
         if: ${{ inputs.confirm_deploy == 'deploy' }}
-        working-directory: ${{ runner.temp }}/val-before
+        shell: bash
         env:
           VAL_TOWN_API_KEY: ${{ secrets.VAL_TOWN_API_KEY }}
-        run: vt push
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/val-before"
+          vt push
