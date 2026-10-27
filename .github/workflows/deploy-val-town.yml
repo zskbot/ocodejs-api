@@ -1,0 +1,109 @@
+name: Deploy identity to Val Town
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_deploy:
+        description: "Choose deploy only after reviewing the backup and test results"
+        required: true
+        type: choice
+        default: verify-only
+        options:
+          - verify-only
+          - deploy
+
+permissions:
+  contents: read
+
+concurrency:
+  group: valtown-identity-ocodejs
+  cancel-in-progress: false
+
+jobs:
+  verify-and-backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install Deno
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL https://deno.land/install.sh -o /tmp/install-deno.sh
+          sh /tmp/install-deno.sh
+          echo "$HOME/.deno/bin" >> "$GITHUB_PATH"
+          "$HOME/.deno/bin/deno" --version
+
+      - name: Type-check identity service
+        working-directory: velclaw-identity
+        run: deno task check
+
+      - name: Run identity security tests
+        working-directory: velclaw-identity
+        run: deno task test
+
+      - name: Check Val Town token is configured
+        shell: bash
+        env:
+          VAL_TOWN_API_KEY: ${{ secrets.VAL_TOWN_API_KEY }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${VAL_TOWN_API_KEY:-}" ]]; then
+            echo "::error::Add VAL_TOWN_API_KEY in Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+      - name: Install pinned Val Town CLI
+        run: deno install -gArf jsr:@valtown/vt@0.1.56
+
+      - name: Clone current Val Town version
+        env:
+          VAL_TOWN_API_KEY: ${{ secrets.VAL_TOWN_API_KEY }}
+        run: vt clone ocodejs/velclaw-identity "$RUNNER_TEMP/val-before" --no-editor-files
+
+      - name: Archive pre-deploy backup
+        run: tar -czf "$RUNNER_TEMP/valtown-identity-backup.tar.gz" -C "$RUNNER_TEMP" val-before
+
+      - name: Upload pre-deploy backup
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: valtown-identity-backup-${{ github.run_id }}
+          path: ${{ runner.temp }}/valtown-identity-backup.tar.gz
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Report verify-only mode
+        if: ${{ inputs.confirm_deploy != 'deploy' }}
+        run: echo "Verification and backup completed. Val Town was not modified."
+
+      - name: Overlay reviewed identity source without deleting Val-only files
+        if: ${{ inputs.confirm_deploy == 'deploy' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="$RUNNER_TEMP/val-before"
+          source="$GITHUB_WORKSPACE/velclaw-identity"
+
+          test -f "$target/.vt/state.json"
+          test -f "$source/index.ts"
+          test -f "$source/deno.json"
+          test -d "$source/backend"
+          test -d "$source/public"
+
+          mkdir -p "$target/backend" "$target/public"
+          cp "$source/index.ts" "$target/index.ts"
+          cp "$source/deno.json" "$target/deno.json"
+          cp -a "$source/backend/." "$target/backend/"
+          cp -a "$source/public/." "$target/public/"
+
+      - name: Deploy to the existing Val Town val
+        if: ${{ inputs.confirm_deploy == 'deploy' }}
+        shell: bash
+        env:
+          VAL_TOWN_API_KEY: ${{ secrets.VAL_TOWN_API_KEY }}
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/val-before"
+          vt push
